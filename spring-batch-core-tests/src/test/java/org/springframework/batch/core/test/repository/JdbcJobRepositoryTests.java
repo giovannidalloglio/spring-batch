@@ -38,6 +38,7 @@ import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +107,32 @@ public class JdbcJobRepositoryTests {
 		int after = simpleJdbcTemplate.queryForInt("SELECT COUNT(*) FROM BATCH_JOB_INSTANCE");
 		assertEquals(before + 1, after);
 		assertNotNull(execution.getId());
+	}
+	
+	@Test
+	public void testFindOrCreateJobWithNonIdentityParams() throws Exception {
+		
+		// TODO: the second job is seen as restart of the first job
+		// is it correct? the identity is the same (the 'core' job-parameters matches) 
+		
+		job.setName("foo");
+		int before = 0;
+		JobParameters jobParameters1 = new JobParametersBuilder().addString(
+				"bar", "foo").addString("foo", "bar").addString("-key", "1").toJobParameters();
+		JobExecution execution1 = repository.createJobExecution(job.getName(), jobParameters1);
+		int after = simpleJdbcTemplate.queryForInt("SELECT COUNT(*) FROM BATCH_JOB_INSTANCE");
+		assertEquals(before + 1, after);
+		assertNotNull(execution1.getId());
+		
+		JobParameters jobParameters2 = new JobParametersBuilder().addString(
+				"bar", "foo").addString("foo", "bar").addString("-key", "2").toJobParameters();
+		JobExecution execution2 = repository.createJobExecution(job.getName(), jobParameters2);
+		int after2 = simpleJdbcTemplate.queryForInt("SELECT COUNT(*) FROM BATCH_JOB_INSTANCE");
+		assertEquals(after, after2);
+		assertNotNull(execution2.getId());
+
+		assertTrue(execution2.getJobId() == execution2.getJobId());
+		assertTrue(execution2.getId() != execution2.getId());
 	}
 
 	@Test

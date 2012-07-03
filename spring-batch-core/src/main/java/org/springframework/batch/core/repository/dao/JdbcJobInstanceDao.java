@@ -87,6 +87,8 @@ public class JdbcJobInstanceDao extends AbstractJdbcBatchMetadataDao implements
 
 	private static final String FIND_LAST_JOBS_BY_NAME = "SELECT JOB_INSTANCE_ID, JOB_NAME from %PREFIX%JOB_INSTANCE where JOB_NAME = ? order by JOB_INSTANCE_ID desc";
 
+	private static final String IDENTITY_EXCLUSION_PREFIX = "-";
+
 	private DataFieldMaxValueIncrementer jobIncrementer;
 
 	/**
@@ -132,6 +134,11 @@ public class JdbcJobInstanceDao extends AbstractJdbcBatchMetadataDao implements
 		List<String> keys = new ArrayList<String>(props.keySet());
 		Collections.sort(keys);
 		for (String key : keys) {
+			
+			if (key.startsWith(IDENTITY_EXCLUSION_PREFIX)) {
+				continue;
+			}
+			
 			JobParameter jobParameter = props.get(key);
 			String value = jobParameter.getValue()==null ? "" : jobParameter.toString();
 			stringBuffer.append(key + "=" + value + ";");

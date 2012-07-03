@@ -112,6 +112,25 @@ public class JdbcJobInstanceDaoTests extends AbstractJobInstanceDaoTests {
 
 	}
 
+	@Transactional
+	@Test
+	public void testCreateJobKeySkippingNonIdentityParams() {
+
+		JdbcJobInstanceDao jdbcDao = (JdbcJobInstanceDao) dao;
+		JobParameters jobParameters1 = new JobParametersBuilder().addString(
+				"foo", "bar").addString("bar", "foo").toJobParameters();
+		String key1 = jdbcDao.createJobKey(jobParameters1);
+		JobParameters jobParameters2 = new JobParametersBuilder().addString(
+				"bar", "foo").addString("foo", "bar").addString("-key", "bar").toJobParameters();
+		String key2 = jdbcDao.createJobKey(jobParameters2);
+		JobParameters jobParameters3 = new JobParametersBuilder().addString(
+				"bar", "foo").addString("foo", "bar").addString("-key", "aaa").toJobParameters();
+		String key3 = jdbcDao.createJobKey(jobParameters3);
+		assertEquals(key1, key2);
+		assertEquals(key1, key3);
+
+	}
+
 	@Test
 	public void testHexing() throws Exception {
 		MessageDigest digest = MessageDigest.getInstance("MD5");
